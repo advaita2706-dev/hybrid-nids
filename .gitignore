@@ -1,4 +1,13 @@
+﻿# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
 
+# Virtual environment
 venv/
+ENV/
+env/
 
-venv/
+# Exclude checkpoint caches but allow models and data
+!.gitignore
+!models/
+!data/
