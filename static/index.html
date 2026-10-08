@@ -3,291 +3,241 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hybrid NIDS — SOC Dashboard</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly-basic.min.js"></script>
+<title>Hybrid NIDS · SOC Analytics</title>
+<!-- Charts: local copy first (works offline), CDN as a fallback -->
+<script src="/static/plotly-basic.min.js"></script>
+<script>window.Plotly || document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly-basic.min.js"><\/script>')</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* ── Reset & Variables ─────────────────────────── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#0a0e17;--bg2:#111827;--card:#1a2332;--card-border:#1e293b;
-  --accent:#3b82f6;--accent2:#06b6d4;--green:#22c55e;--red:#ef4444;--amber:#f59e0b;
-  --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
-  --glass:rgba(30,41,59,.55);--radius:12px;
-  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --bg:#09090b;--bg2:#121215;--card:#18181b;--card-border:#27272a;--border-hover:#3f3f46;
+  --accent:#2563eb;--accent-hover:#1d4ed8;
+  --green:#16a34a;--green-light:#4ade80;--red:#dc2626;--red-light:#f87171;--amber:#d97706;--amber-light:#fbbf24;
+  --text:#f4f4f5;--text2:#a1a1aa;--text3:#8b8b94;
+  --radius:6px;
+  --font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
 }
-html{font-size:14px}
-body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
-
-/* ── Utility ───────────────────────────────────── */
-.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
-.badge-green{background:rgba(34,197,94,.15);color:var(--green)}
-.badge-red{background:rgba(239,68,68,.15);color:var(--red)}
-.badge-amber{background:rgba(245,158,11,.15);color:var(--amber)}
-.badge-blue{background:rgba(59,130,246,.15);color:var(--accent)}
-
-/* ── Layout ────────────────────────────────────── */
-.topbar{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:14px 28px;background:var(--bg2);border-bottom:1px solid var(--card-border);
-  position:sticky;top:0;z-index:100;backdrop-filter:blur(12px);
-}
-.topbar h1{font-size:1.15rem;font-weight:700;display:flex;align-items:center;gap:10px}
-.topbar h1 span.icon{font-size:1.4rem}
-.topbar .meta{display:flex;gap:18px;align-items:center;font-size:.82rem;color:var(--text2)}
-.topbar .meta .dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px}
-.topbar .meta .dot.on{background:var(--green);box-shadow:0 0 6px var(--green)}
-.topbar .meta .dot.off{background:var(--red)}
-
-.container{max-width:1400px;margin:0 auto;padding:20px 24px}
-
-/* ── Cards ─────────────────────────────────────── */
-.grid{display:grid;gap:18px}
+html{font-size:14px;overflow-x:hidden}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;letter-spacing:-0.01em;-webkit-font-smoothing:antialiased}
+.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:4px;font-family:var(--font-mono);font-size:0.68rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;border:1px solid transparent}
+.badge-green{background:rgba(22,163,74,0.12);color:var(--green-light);border-color:rgba(22,163,74,0.25)}
+.badge-red{background:rgba(220,38,38,0.12);color:var(--red-light);border-color:rgba(220,38,38,0.25)}
+.badge-amber{background:rgba(217,119,6,0.12);color:var(--amber-light);border-color:rgba(217,119,6,0.25)}
+.badge-blue{background:rgba(37,99,235,0.12);color:#60a5fa;border-color:rgba(37,99,235,0.25)}
+.font-mono{font-family:var(--font-mono)}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:14px 28px;background:var(--bg2);border-bottom:1px solid var(--card-border);position:sticky;top:0;z-index:100}
+.topbar h1{font-size:1.05rem;font-weight:600;display:flex;align-items:center;gap:10px;letter-spacing:-0.02em}
+.topbar h1 .tag{font-family:var(--font-mono);font-size:0.65rem;background:var(--card-border);padding:2px 6px;border-radius:4px;color:var(--text2)}
+.topbar .meta{display:flex;gap:24px;align-items:center;font-size:0.8rem;color:var(--text2);font-family:var(--font-mono);flex-wrap:wrap}
+.status-indicator{display:flex;align-items:center;gap:8px}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.dot.on{background:var(--green-light);box-shadow:0 0 8px rgba(74,222,128,0.4)}
+.dot.off{background:var(--red-light)}
+.container{max-width:1440px;margin:0 auto;padding:24px}
+.grid{display:grid;gap:16px}
 .grid-4{grid-template-columns:repeat(4,1fr)}
 .grid-2{grid-template-columns:repeat(2,1fr)}
-.grid-3{grid-template-columns:repeat(3,1fr)}
-
-.card{
-  background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);
-  padding:20px 22px;position:relative;overflow:hidden;
-  transition:border-color .2s;
-}
-.card:hover{border-color:rgba(59,130,246,.3)}
-.card h3{font-size:.78rem;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);margin-bottom:10px;font-weight:600}
-.card .big{font-size:2rem;font-weight:700;line-height:1.1}
-.card .sub{font-size:.82rem;color:var(--text2);margin-top:4px}
-.card .glow{
-  position:absolute;top:-30px;right:-30px;width:80px;height:80px;border-radius:50%;
-  filter:blur(30px);opacity:.15;pointer-events:none;
-}
-
-.section-title{font-size:1rem;font-weight:600;margin:28px 0 14px;display:flex;align-items:center;gap:8px}
-
-/* ── Analyze Panel ─────────────────────────────── */
-.analyze-panel{
-  background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);
-  padding:24px;margin-bottom:18px;
-}
-.analyze-panel h2{font-size:1.05rem;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
-.input-row{display:flex;gap:12px;align-items:stretch}
-.input-row select,.input-row button{height:42px;border-radius:8px;font-size:.88rem;border:1px solid var(--card-border);padding:0 14px}
-.input-row select{background:var(--bg);color:var(--text);flex:0 0 220px;cursor:pointer}
-.input-row button{cursor:pointer;font-weight:600;display:flex;align-items:center;gap:6px}
-.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)!important}
-.btn-primary:hover{background:#2563eb}
-.btn-secondary{background:var(--bg);color:var(--text)}
-.btn-secondary:hover{background:var(--bg2)}
-.btn-danger{background:rgba(239,68,68,.15);color:var(--red);border-color:rgba(239,68,68,.25)!important}
-
-textarea.flow-input{
-  width:100%;margin-top:12px;height:80px;background:var(--bg);color:var(--text);
-  border:1px solid var(--card-border);border-radius:8px;padding:12px;
-  font-family:'Courier New',monospace;font-size:.85rem;resize:vertical;
-}
-
-/* ── Result Card ───────────────────────────────── */
-.result-card{
-  margin-top:18px;padding:20px;border-radius:var(--radius);border:1px solid var(--card-border);
-  display:none;
-}
+.card{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:20px;position:relative;min-width:0}
+.card h3{font-size:0.75rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--text2);margin-bottom:12px;font-weight:600}
+.card .big{font-family:var(--font-mono);font-size:1.6rem;font-weight:500;line-height:1.15;color:var(--text);margin-bottom:6px;overflow-wrap:anywhere}
+.card .sub{font-size:0.8rem;color:var(--text3);overflow-wrap:anywhere}
+.section-title{font-size:0.85rem;font-weight:600;margin:32px 0 16px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;padding-bottom:8px;border-bottom:1px solid var(--card-border);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.analyze-panel{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:24px;margin-bottom:24px}
+.analyze-panel h2{font-size:1rem;font-weight:600;margin-bottom:6px}
+.analyze-panel .hint{font-size:0.8rem;color:var(--text3);margin-bottom:18px}
+.input-row{display:flex;gap:12px;align-items:stretch;flex-wrap:wrap}
+.input-row select,.input-row button,textarea.flow-input{border-radius:4px;font-size:0.85rem;border:1px solid var(--card-border);background:var(--bg);color:var(--text);transition:all 0.15s ease;font-family:inherit}
+.input-row select{padding:10px 16px;flex:1 1 300px;cursor:pointer;outline:none}
+.input-row select:focus,textarea.flow-input:focus{border-color:var(--accent)}
+.input-row button{padding:10px 20px;cursor:pointer;font-weight:500}
+.btn-primary{background:var(--accent)!important;color:#fff!important;border-color:var(--accent)!important}
+.btn-primary:hover{background:var(--accent-hover)!important}
+.btn-secondary{background:var(--bg2)!important;color:var(--text)}
+.btn-secondary:hover{background:var(--card-border)!important}
+.btn-danger{background:transparent!important;color:var(--red-light)!important}
+.btn-danger:hover{border-color:var(--red-light)!important;background:rgba(220,38,38,0.1)!important}
+button:disabled{opacity:0.5;cursor:wait}
+textarea.flow-input{width:100%;margin-top:16px;height:72px;padding:12px 16px;font-family:var(--font-mono);font-size:0.78rem;resize:vertical;outline:none;color:var(--text2)}
+.error-box{display:none;margin-top:16px;padding:12px 16px;border-radius:4px;border:1px solid rgba(220,38,38,0.35);background:rgba(220,38,38,0.08);color:var(--red-light);font-size:0.85rem}
+.error-box.show{display:block}
+.demo-status{display:none;margin-top:16px;padding:12px 16px;border-radius:4px;border:1px solid rgba(37,99,235,0.35);background:rgba(37,99,235,0.08);color:#93c5fd;font-family:var(--font-mono);font-size:0.8rem}
+.demo-status.show{display:block}
+.result-card{margin-top:24px;padding:24px;border-radius:var(--radius);border:1px solid var(--card-border);background:var(--bg2);display:none}
 .result-card.show{display:block}
-.result-card.benign{background:rgba(34,197,94,.06);border-color:rgba(34,197,94,.25)}
-.result-card.threat{background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.25)}
-.result-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
-.result-header .label{font-size:1.3rem;font-weight:700}
-.result-details{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-top:16px}
-.result-detail{background:var(--glass);padding:12px;border-radius:8px}
-.result-detail .dt{font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:3px}
-.result-detail .dd{font-size:1.05rem;font-weight:600}
-
-/* ── SHAP ──────────────────────────────────────── */
-.shap-bar{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:.84rem}
-.shap-bar .name{width:180px;text-align:right;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.shap-bar .bar-wrap{flex:1;height:20px;background:var(--bg);border-radius:4px;overflow:hidden;position:relative}
-.shap-bar .bar{height:100%;border-radius:4px;min-width:2px;transition:width .4s}
-.shap-bar .bar.pos{background:var(--red)}
-.shap-bar .bar.neg{background:var(--accent)}
-.shap-bar .val{width:60px;font-size:.78rem;color:var(--text3)}
-
-/* ── Alert Log ─────────────────────────────────── */
-.alert-table{width:100%;border-collapse:collapse;font-size:.84rem}
-.alert-table th{text-align:left;padding:10px 12px;color:var(--text3);font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--card-border)}
-.alert-table td{padding:10px 12px;border-bottom:1px solid rgba(30,41,59,.4)}
-.alert-table tr:hover td{background:rgba(59,130,246,.04)}
-
-/* ── Settings Panel ────────────────────────────── */
-.settings-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.settings-row label{font-size:.85rem;color:var(--text2);font-weight:500}
-.radio-group{display:flex;gap:4px}
-.radio-group button{
-  padding:7px 16px;border-radius:6px;border:1px solid var(--card-border);
-  background:var(--bg);color:var(--text2);cursor:pointer;font-size:.82rem;font-weight:500;
-  transition:all .15s;
-}
-.radio-group button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
-
-/* ── Scrollbar ─────────────────────────────────── */
-::-webkit-scrollbar{width:6px}
-::-webkit-scrollbar-track{background:transparent}
+.result-card.benign{border-left:4px solid var(--green)}
+.result-card.threat{border-left:4px solid var(--red)}
+.result-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.result-header .label{font-size:1.25rem;font-weight:600;font-family:var(--font-mono)}
+.result-details{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.result-detail{background:var(--card);padding:14px;border-radius:4px;border:1px solid var(--card-border)}
+.result-detail .dt{font-size:0.72rem;color:var(--text2);margin-bottom:6px;font-weight:500;text-transform:uppercase}
+.result-detail .dd{font-family:var(--font-mono);font-size:1.1rem;font-weight:500;color:var(--text)}
+.mini-title{font-size:0.75rem;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;font-weight:600}
+.mini-note{font-size:0.75rem;color:var(--text3);margin-bottom:12px}
+.shap-bar{display:flex;align-items:center;gap:12px;margin:10px 0;font-family:var(--font-mono);font-size:0.75rem}
+.shap-bar .name{width:210px;text-align:right;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.shap-bar .bar-wrap{flex:1;height:8px;background:var(--bg);border-radius:2px;overflow:hidden}
+.shap-bar .bar{height:100%;min-width:2px;border-radius:0 4px 4px 0;transition:width 0.4s ease}
+.shap-bar .bar.pos{background:var(--red-light)}
+.shap-bar .bar.neg{background:#60a5fa}
+.shap-bar .val{width:70px;color:var(--text3);text-align:right}
+.table-container{overflow-x:auto;border:1px solid var(--card-border);border-radius:var(--radius);background:var(--card)}
+.data-table{width:100%;border-collapse:collapse;font-size:0.8rem}
+.data-table th{text-align:left;padding:12px 16px;color:var(--text2);font-weight:500;border-bottom:1px solid var(--card-border);background:var(--bg2)}
+.data-table td{padding:12px 16px;border-bottom:1px solid var(--card-border);font-family:var(--font-mono);color:var(--text)}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover td{background:rgba(255,255,255,0.02)}
+.settings-row{display:flex;gap:16px;align-items:center;flex-wrap:wrap;padding:16px 20px;background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);margin-bottom:24px}
+.settings-row label{font-size:0.85rem;color:var(--text2);font-weight:500}
+.radio-group{display:flex;background:var(--bg2);border:1px solid var(--card-border);border-radius:4px;overflow:hidden}
+.radio-group button{padding:6px 16px;border:none;background:transparent;color:var(--text2);cursor:pointer;font-size:0.8rem;font-weight:500;transition:background 0.15s;border-right:1px solid var(--card-border);font-family:inherit}
+.radio-group button:last-child{border-right:none}
+.radio-group button.active{background:var(--card-border);color:var(--text)}
+.radio-group button:hover:not(.active){background:rgba(255,255,255,0.03)}
+.small-btn{padding:4px 10px;font-size:0.72rem;border-radius:4px;border:1px solid var(--card-border);cursor:pointer;background:var(--bg2);color:var(--text);font-family:inherit}
+.small-btn:hover{background:var(--card-border)}
+.empty{text-align:center;padding:32px;color:var(--text3);font-size:0.85rem}
+.chart-empty{display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3);font-size:0.85rem}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--card-border);border-radius:3px}
-
-/* ── Plotly overrides ──────────────────────────── */
-.js-plotly-plot .plotly .modebar{top:4px!important;right:4px!important}
-
-/* ── Responsive ────────────────────────────────── */
-@media(max-width:1100px){.grid-4{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:700px){.grid-4,.grid-2,.grid-3{grid-template-columns:1fr}.input-row{flex-direction:column}.input-row select{flex:auto}}
-
-/* ── Loading animation ─────────────────────────── */
-.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.pulse{animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+@media(max-width:1024px){.grid-4{grid-template-columns:repeat(2,1fr)}.result-details{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.container{padding:16px}.topbar{padding:12px 16px}.grid-4,.grid-2,.result-details{grid-template-columns:1fr}.input-row{flex-direction:column}.input-row select{flex:auto}.shap-bar .name{width:120px}}
 </style>
 </head>
 <body>
 
-<!-- ── Top Bar ──────────────────────────────────── -->
 <div class="topbar">
-  <h1><span class="icon">&#x1F6E1;</span> Hybrid NIDS <span style="font-weight:400;font-size:.82rem;color:var(--text3)">v1.0</span></h1>
+  <h1>Hybrid NIDS / SOC Analytics <span class="tag">RF · Autoencoder · SHAP</span></h1>
   <div class="meta">
-    <span id="api-status"><span class="dot off"></span> Connecting...</span>
-    <span id="uptime-display">Uptime: --</span>
-    <span id="clock"></span>
+    <div class="status-indicator" id="api-status"><span class="dot off"></span> <span>CONNECTING</span></div>
+    <span id="uptime-display">UPTIME: --</span>
+    <span id="clock">--:--:--</span>
   </div>
 </div>
 
 <div class="container">
 
-  <!-- ── KPI Cards ─────────────────────────────── -->
-  <div class="grid grid-4" style="margin-bottom:18px">
+  <div class="grid grid-4" style="margin-bottom:24px">
     <div class="card">
-      <div class="glow" style="background:var(--accent)"></div>
-      <h3>Model Type</h3>
-      <div class="big" style="font-size:1.1rem;color:var(--accent)" id="kpi-model">--</div>
-      <div class="sub" id="kpi-features">-- features</div>
+      <h3>Active Model Engine</h3>
+      <div class="big" id="kpi-model">--</div>
+      <div class="sub" id="kpi-features">--</div>
     </div>
     <div class="card">
-      <div class="glow" style="background:var(--green)"></div>
-      <h3>Classes Detected</h3>
+      <h3>Detection Classes</h3>
       <div class="big" id="kpi-classes">--</div>
-      <div class="sub" id="kpi-class-list">--</div>
+      <div class="sub font-mono" id="kpi-class-list">--</div>
     </div>
     <div class="card">
-      <div class="glow" style="background:var(--amber)"></div>
-      <h3>AE Threshold</h3>
+      <h3>Anomaly Threshold</h3>
       <div class="big" id="kpi-threshold">--</div>
-      <div class="sub" id="kpi-scrutiny">Scrutiny: --</div>
+      <div class="sub" id="kpi-scrutiny">--</div>
     </div>
     <div class="card">
-      <div class="glow" style="background:var(--red)"></div>
-      <h3>Total Alerts</h3>
-      <div class="big" id="kpi-alerts">0</div>
-      <div class="sub">Since system start</div>
+      <h3>Alerts Since Start</h3>
+      <div class="big" id="kpi-alerts" style="color:var(--red-light)">--</div>
+      <div class="sub">Kept in server memory (last 500)</div>
     </div>
   </div>
 
-  <!-- ── Scrutiny Settings ─────────────────────── -->
-  <div class="card" style="margin-bottom:18px">
-    <div class="settings-row">
-      <label>Scrutiny Level:</label>
-      <div class="radio-group" id="scrutiny-group">
-        <button data-val="low">Low</button>
-        <button data-val="medium" class="active">Medium</button>
-        <button data-val="high">High</button>
-      </div>
-      <span style="margin-left:12px;font-size:.82rem;color:var(--text3)">Effective threshold: <strong id="eff-threshold">--</strong></span>
+  <div class="settings-row">
+    <label>Scrutiny Policy</label>
+    <div class="radio-group" id="scrutiny-group">
+      <button data-val="low">Low</button>
+      <button data-val="medium" class="active">Medium</button>
+      <button data-val="high">High</button>
     </div>
+    <span style="font-size:0.78rem;color:var(--text3)">Low ×1.5 · Medium ×1.0 · High ×0.6 of the base threshold</span>
+    <span style="margin-left:auto;font-size:0.8rem;color:var(--text3);font-family:var(--font-mono)">
+      EFFECTIVE_THRESHOLD: <strong id="eff-threshold" style="color:var(--text)">--</strong>
+    </span>
   </div>
 
-  <!-- ── Analyze ───────────────────────────────── -->
   <div class="analyze-panel">
-    <h2>&#x1F50D; Analyze Network Flow</h2>
+    <h2>Manual Traffic Analysis</h2>
+    <p class="hint">Samples are real flows from the CICIDS2017 test set, which the model never saw during training.</p>
     <div class="input-row">
       <select id="sample-select">
-        <option value="">-- Select a sample flow --</option>
-        <option value="benign">Benign (normal traffic)</option>
-        <option value="ddos">DDoS attack</option>
-        <option value="portscan">Port Scan</option>
-        <option value="bruteforce">Brute Force (FTP)</option>
-        <option value="infiltration">Infiltration</option>
-        <option value="botnet">Botnet</option>
-        <option value="random">Random anomaly</option>
+        <option value="">Select a test flow...</option>
       </select>
-      <button class="btn-primary" onclick="analyzeFlow()">&#9654; Analyze</button>
-      <button class="btn-secondary" onclick="analyzeBatch()">&#x1F4E6; Batch (5 random)</button>
-      <button class="btn-danger" onclick="clearResult()">&#x2715; Clear</button>
+      <button class="btn-primary" id="btn-analyze" onclick="analyzeFlow()">Execute Analysis</button>
+      <button class="btn-secondary" id="btn-batch" onclick="analyzeBatch()">Batch Test (all samples)</button>
+      <button class="btn-secondary" id="btn-demo" onclick="toggleDemo()">▶ Start Demo</button>
+      <button class="btn-danger" onclick="clearResult()">Clear Buffer</button>
     </div>
-    <textarea class="flow-input" id="flow-input" placeholder="Or paste 78 comma-separated feature values here..."></textarea>
+    <textarea class="flow-input" id="flow-input" placeholder="Or paste 78 comma-separated feature values..."></textarea>
+    <div class="error-box" id="error-box"></div>
+    <div class="demo-status" id="demo-status"></div>
 
-    <!-- result -->
     <div class="result-card" id="result-card">
       <div class="result-header">
         <div>
           <span class="label" id="res-prediction">--</span>
-          <span class="badge" id="res-badge" style="margin-left:8px">--</span>
+          <span class="badge" id="res-badge" style="margin-left:12px">--</span>
         </div>
-        <span style="font-size:.78rem;color:var(--text3)" id="res-timestamp">--</span>
+        <span class="font-mono" style="font-size:0.75rem;color:var(--text3)" id="res-timestamp">--</span>
       </div>
       <div class="result-details">
-        <div class="result-detail"><div class="dt">Confidence</div><div class="dd" id="res-confidence">--</div></div>
-        <div class="result-detail"><div class="dt">Anomaly Score</div><div class="dd" id="res-anomaly">--</div></div>
-        <div class="result-detail"><div class="dt">Anomaly?</div><div class="dd" id="res-is-anomaly">--</div></div>
-        <div class="result-detail"><div class="dt">Threshold</div><div class="dd" id="res-threshold">--</div></div>
+        <div class="result-detail"><div class="dt">Classification Confidence</div><div class="dd" id="res-confidence">--</div></div>
+        <div class="result-detail"><div class="dt">Autoencoder Anomaly Score</div><div class="dd" id="res-anomaly">--</div></div>
+        <div class="result-detail"><div class="dt">Anomaly Triggered</div><div class="dd" id="res-is-anomaly">--</div></div>
+        <div class="result-detail"><div class="dt">Threshold Applied</div><div class="dd" id="res-threshold">--</div></div>
       </div>
-
-      <!-- SHAP -->
-      <div style="margin-top:18px">
-        <h3 style="font-size:.82rem;color:var(--text3);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">SHAP — Top Contributing Features</h3>
-        <div id="shap-bars"></div>
-      </div>
-
-      <!-- Class Probabilities -->
-      <div style="margin-top:18px">
-        <h3 style="font-size:.82rem;color:var(--text3);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">Class Probabilities</h3>
-        <div id="class-probs-chart" style="height:250px"></div>
+      <div class="grid grid-2" style="margin-top:28px;gap:28px">
+        <div>
+          <div class="mini-title">Explainable AI (SHAP Top Features)</div>
+          <div class="mini-note">Red pushes toward the predicted class; blue pushes away from it.</div>
+          <div id="shap-bars"></div>
+        </div>
+        <div>
+          <div class="mini-title">Class Probability Distribution</div>
+          <div class="mini-note">Top classes from the Random Forest.</div>
+          <div id="class-probs-chart" style="height:220px"></div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- ── Batch Results ─────────────────────────── -->
-  <div class="result-card" id="batch-result" style="margin-bottom:18px">
-    <h3 style="font-size:.9rem;font-weight:600;margin-bottom:12px">&#x1F4E6; Batch Analysis Results</h3>
-    <div id="batch-summary" style="margin-bottom:12px"></div>
-    <div style="overflow-x:auto">
-      <table class="alert-table" id="batch-table">
-        <thead><tr><th>#</th><th>Prediction</th><th>Confidence</th><th>Anomaly Score</th><th>Anomaly?</th></tr></thead>
+  <div class="result-card" id="batch-result" style="margin-bottom:24px;background:var(--card);border-left:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+      <h3 style="font-size:0.85rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px">Batch Execution Results</h3>
+      <div id="batch-summary"></div>
+    </div>
+    <div class="table-container">
+      <table class="data-table" id="batch-table">
+        <thead><tr><th>Seq</th><th>True Label</th><th>Classification</th><th>Confidence</th><th>Anomaly Score</th><th>Correct</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
   </div>
 
-  <!-- ── Charts ────────────────────────────────── -->
-  <div class="section-title">&#x1F4CA; Analytics</div>
-  <div class="grid grid-2" style="margin-bottom:18px">
+  <div class="section-title">Telemetry Analytics</div>
+  <div class="grid grid-2" style="margin-bottom:32px">
     <div class="card">
-      <h3>Alert Timeline</h3>
+      <h3 style="margin-bottom:16px">Threat Detection Timeline</h3>
       <div id="chart-timeline" style="height:260px"></div>
     </div>
     <div class="card">
-      <h3>Attack Type Distribution</h3>
+      <h3 style="margin-bottom:16px">Attack Vector Distribution</h3>
       <div id="chart-distribution" style="height:260px"></div>
     </div>
   </div>
 
-  <!-- ── Alert Log ─────────────────────────────── -->
-  <div class="section-title">&#x1F6A8; Recent Alerts</div>
-  <div class="card" style="margin-bottom:40px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <span style="font-size:.82rem;color:var(--text3)" id="alert-count">0 alerts</span>
-      <button class="btn-secondary" onclick="loadAlerts()" style="padding:6px 14px;font-size:.8rem;border-radius:6px;border:1px solid var(--card-border);background:var(--bg);color:var(--text);cursor:pointer">&#x21BB; Refresh</button>
-    </div>
-    <div style="overflow-x:auto;max-height:400px;overflow-y:auto">
-      <table class="alert-table" id="alert-table">
-        <thead><tr><th>Time</th><th>Prediction</th><th>Confidence</th><th>Anomaly Score</th><th>Status</th></tr></thead>
-        <tbody id="alert-tbody"></tbody>
-      </table>
-    </div>
-    <div id="no-alerts" style="text-align:center;padding:30px;color:var(--text3);font-size:.9rem">No alerts yet. Analyze a flow to generate alerts.</div>
+  <div class="section-title">
+    <span>System Alert Log <span style="text-transform:none;font-weight:400;color:var(--text3)" id="auto-note">· auto-refresh every 3 s</span></span>
+    <button class="small-btn" onclick="loadAlerts(true)">Refresh Logs</button>
+  </div>
+  <div class="table-container" style="margin-bottom:40px;max-height:380px;overflow-y:auto">
+    <table class="data-table" id="alert-table">
+      <thead style="position:sticky;top:0;z-index:10"><tr><th>Timestamp</th><th>Vector</th><th>Confidence</th><th>Score</th><th>Flag</th></tr></thead>
+      <tbody id="alert-tbody"></tbody>
+    </table>
+    <div id="no-alerts" class="empty">Event log is empty. Run an analysis or the replay engine to generate alerts.</div>
   </div>
 
 </div>
@@ -295,235 +245,281 @@ textarea.flow-input{
 <script>
 const API = window.location.origin;
 
-// ── Sample flows (78 CICIDS2017 features) ──────
-const SAMPLES = {
-  benign:       [80,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,20,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,8192,0,0,20,0,0,0,0,0,0,0,0],
-  ddos:         [80,100,50000,50000,3e6,3e6,1500,60,800,400,1500,60,800,400,5e7,1e6,2,1,5,0,100,2,1,5,0,100,2,1,5,0,1,0,0,0,800000,800000,500000,500000,60,1500,800,400,160000,0,1,0,0,1,0,0,0,1,800,800,800,800000,0,0,0,0,0,0,50000,3e6,50000,3e6,8192,8192,50000,20,0,0,0,0,0,0,0,0],
-  portscan:     [0,10,1,0,0,0,0,0,0,0,0,0,0,0,0,100000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,40,0,100000,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,40,0,0,0,0,0,0,1,0,0,0,8192,-1,0,20,0,0,0,0,0,0,0,0],
-  bruteforce:   [21,2000,10,8,500,200,100,40,50,15,40,20,25,8,250,9,200,100,500,50,2000,200,100,500,50,1600,200,100,400,50,0,0,0,0,200,160,5,4,20,100,60,30,900,0,0,0,1,1,0,0,0,1,60,50,25,200,0,0,0,0,0,0,10,500,8,200,65535,65535,8,20,0,0,0,0,0,0,0,0],
-  infiltration: [443,50000,20,15,5000,3000,500,100,250,120,400,50,200,100,100,0.7,2500,1200,5000,500,50000,2500,1200,5000,500,37500,2500,1200,5000,500,0,0,0,0,400,300,0.4,0.3,50,500,275,130,16900,0,0,0,1,1,0,0,0,1,275,250,200,400,0,0,0,0,0,0,20,5000,15,3000,16384,16384,15,20,50000,30000,50000,50000,0,0,0,0],
-  botnet:       [6667,120000,100,80,25000,20000,500,50,250,100,400,50,250,80,208,1.5,1200,600,3000,200,120000,1200,600,3000,200,96000,1200,600,3000,200,0,0,0,0,2000,1600,0.83,0.67,50,500,275,100,10000,0,0,0,1,1,0,0,0,1,275,250,250,2000,0,0,0,0,0,0,100,25000,80,20000,32768,32768,80,20,120000,60000,120000,120000,0,0,0,0],
-};
+// Real flows from data/processed/test.parquet, one per class, each classified correctly by the deployed model.
+const SAMPLES = {"BENIGN":{"row":337915,"features":[53.0,48748.0,2.0,2.0,88.0,246.0,44.0,44.0,44.0,0.0,123.0,123.0,123.0,0.0,6851.563141,82.0546484,16249.33333,28101.37826,48698.0,3.0,3.0,3.0,0.0,3.0,3.0,47.0,47.0,0.0,47.0,47.0,0.0,0.0,0.0,0.0,64.0,40.0,41.0273242,41.0273242,44.0,123.0,75.6,43.27008204,1872.3,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,94.5,44.0,123.0,64.0,0.0,0.0,0.0,0.0,0.0,0.0,2.0,88.0,2.0,246.0,-1.0,-1.0,1.0,32.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},"DDoS":{"row":152927,"features":[80.0,132678.0,3.0,6.0,26.0,11607.0,20.0,0.0,8.666666667,10.26320288,4380.0,0.0,1934.5,2177.344966,87678.43953,67.83340117,16584.75,46627.03489,131980.0,3.0,611.0,305.5,362.7457787,562.0,49.0,132632.0,26526.4,58950.85787,131980.0,3.0,0.0,0.0,0.0,0.0,72.0,132.0,22.61113372,45.22226744,0.0,4380.0,1163.3,1903.962654,3625073.789,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,2.0,1292.555556,8.666666667,1934.5,72.0,0.0,0.0,0.0,0.0,0.0,0.0,3.0,26.0,6.0,11607.0,8192.0,229.0,2.0,20.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},"PortScan":{"row":414945,"features":[50002.0,11.0,1.0,1.0,0.0,6.0,0.0,0.0,0.0,0.0,6.0,6.0,6.0,0.0,545454.5455,181818.1818,11.0,0.0,11.0,11.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,40.0,20.0,90909.09091,90909.09091,0.0,6.0,2.0,3.464101615,12.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,3.0,0.0,6.0,40.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,1.0,6.0,29200.0,0.0,0.0,40.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},"DoS Hulk":{"row":338429,"features":[80.0,98173881.0,7.0,5.0,333.0,11595.0,333.0,0.0,47.57142857,125.8621695,7240.0,0.0,2319.0,3331.638186,121.498711,0.122232104,8924898.273,29600000.0,98100000.0,1.0,98100000.0,16400000.0,40100000.0,98100000.0,1.0,50624.0,12656.0,17934.94697,38226.0,188.0,0.0,0.0,0.0,0.0,232.0,168.0,0.07130206,0.050930043,0.0,7240.0,917.5384615,2244.521984,5037878.936,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,994.0,47.57142857,2319.0,232.0,0.0,0.0,0.0,0.0,0.0,0.0,7.0,333.0,5.0,11595.0,251.0,235.0,1.0,32.0,5.0,0.0,5.0,5.0,98100000.0,0.0,98100000.0,98100000.0]},"DoS slowloris":{"row":105342,"features":[80.0,537813.0,4.0,2.0,231.0,0.0,231.0,0.0,57.75,115.5,0.0,0.0,0.0,0.0,429.5173229,11.1562941,107562.6,240108.1252,537081.0,48.0,537813.0,179271.0,309914.9937,537130.0,268.0,684.0,684.0,0.0,684.0,684.0,0.0,0.0,0.0,0.0,136.0,72.0,7.437529401,3.718764701,0.0,231.0,33.0,87.30979327,7623.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0,38.5,57.75,0.0,136.0,0.0,0.0,0.0,0.0,0.0,0.0,4.0,231.0,2.0,0.0,29200.0,235.0,1.0,32.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},"FTP-Patator":{"row":465268,"features":[21.0,247.0,2.0,1.0,14.0,0.0,14.0,0.0,7.0,9.899494937,0.0,0.0,0.0,0.0,56680.16194,12145.74899,123.5,101.1162697,195.0,52.0,247.0,247.0,0.0,247.0,247.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,64.0,20.0,8097.165992,4048.582996,0.0,14.0,7.0,8.082903769,65.33333333,0.0,1.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,9.333333333,7.0,0.0,64.0,0.0,0.0,0.0,0.0,0.0,0.0,2.0,14.0,1.0,0.0,229.0,0.0,0.0,32.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},"SSH-Patator":{"row":168135,"features":[22.0,12254594.0,21.0,32.0,2008.0,2745.0,640.0,0.0,95.61904762,140.0451628,976.0,0.0,85.78125,220.240592,387.8545466,4.324908683,235665.2692,633525.2859,2256186.0,20.0,9956680.0,497834.0,872759.5433,2162962.0,937.0,12300000.0,395305.871,785642.563,2256186.0,36.0,0.0,0.0,0.0,0.0,680.0,1032.0,1.713643063,2.61126562,0.0,976.0,88.01851852,189.5902723,35944.47135,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,89.67924528,95.61904762,85.78125,680.0,0.0,0.0,0.0,0.0,0.0,0.0,21.0,2008.0,32.0,2745.0,29200.0,247.0,16.0,32.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},"Bot":{"row":488251,"features":[51608.0,15.0,1.0,1.0,6.0,6.0,6.0,6.0,6.0,0.0,6.0,6.0,6.0,0.0,800000.0,133333.3333,15.0,0.0,15.0,15.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,20.0,20.0,66666.66667,66666.66667,6.0,6.0,6.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,1.0,0.0,0.0,1.0,9.0,6.0,6.0,20.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,6.0,1.0,6.0,237.0,256.0,0.0,20.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},"Web Attack \u2013 Brute Force":{"row":287250,"features":[80.0,5990847.0,3.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.66768522,1996949.0,3458188.404,5990121.0,92.0,5990847.0,2995423.5,4235141.82,5990121.0,726.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,104.0,40.0,0.500763915,0.166921305,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,104.0,0.0,0.0,0.0,0.0,0.0,0.0,3.0,0.0,1.0,0.0,29200.0,28960.0,0.0,32.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]}};
 
-function randomAnomaly(){
-  return Array.from({length:78},(_,i)=>{
-    if(i===0) return [22,23,25,53,80,110,443,993,995,8080,8443][Math.floor(Math.random()*11)];
-    return +(Math.random()*1e5*(Math.random()>.5?1:Math.random())).toFixed(2);
-  });
+const PALETTE = ['#60a5fa','#f87171','#fbbf24','#4ade80','#c084fc','#f472b6','#22d3ee','#fb923c','#a3e635','#e879f9','#94a3b8','#facc15','#2dd4bf','#f43f5e','#818cf8'];
+const colorMap = {};
+const colorFor = c => (colorMap[c] ??= PALETTE[Object.keys(colorMap).length % PALETTE.length]);
+const clean = s => String(s ?? '').replace(/ï¿½|�/g, '–');
+const esc = s => clean(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+const plotCfg = { responsive: true, displayModeBar: false };
+const localTs = t => { const d = new Date(t), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`; };
+const axis = { color: '#8b8b94', gridcolor: '#27272a', tickfont: { family: 'JetBrains Mono, Consolas, ui-monospace, monospace', size: 10 } };
+
+// ── Sample dropdown ─────────────────────────────────────────
+const sel = document.getElementById('sample-select');
+Object.keys(SAMPLES).forEach(k => {
+  const o = document.createElement('option');
+  o.value = k; o.textContent = (k === 'BENIGN' ? 'BENIGN' : 'ATTACK: ' + k) + '  (test row ' + SAMPLES[k].row + ')';
+  sel.appendChild(o);
+});
+sel.insertAdjacentHTML('beforeend', '<option value="__random">Random values (not real traffic)</option>');
+sel.addEventListener('change', e => {
+  const v = e.target.value;
+  if (SAMPLES[v]) document.getElementById('flow-input').value = SAMPLES[v].features.join(',');
+  else if (v === '__random') document.getElementById('flow-input').value = randomVector().join(',');
+});
+function randomVector(){
+  return Array.from({length:78}, (_, i) => i === 0 ? [22,23,25,53,80,443,8080][Math.floor(Math.random()*7)]
+    : +(Math.random()*1e5*(Math.random() > .5 ? 1 : Math.random())).toFixed(2));
 }
 
-// ── Clock ─────────────────────────────────────
-function tickClock(){
-  document.getElementById('clock').textContent=new Date().toLocaleTimeString();
-}
-setInterval(tickClock,1000);tickClock();
+// ── Clock, health, model info ───────────────────────────────
+function tickClock(){ document.getElementById('clock').textContent = new Date().toLocaleTimeString('en-GB', {hour12:false}); }
+setInterval(tickClock, 1000); tickClock();
 
-// ── Health Polling ────────────────────────────
-let apiOnline=false;
+let lastAlertTotal = -1;
 async function pollHealth(){
-  try{
-    const r=await fetch(API+'/health');
-    const d=await r.json();
-    apiOnline=true;
-    document.getElementById('api-status').innerHTML='<span class="dot on"></span> API Online';
-    const u=d.uptime_seconds;
-    const h=Math.floor(u/3600),m=Math.floor((u%3600)/60),s=Math.floor(u%60);
-    document.getElementById('uptime-display').textContent=`Uptime: ${h}h ${m}m ${s}s`;
-    document.getElementById('kpi-alerts').textContent=d.total_alerts;
-  }catch{
-    apiOnline=false;
-    document.getElementById('api-status').innerHTML='<span class="dot off"></span> Offline';
+  const st = document.getElementById('api-status');
+  try {
+    const d = await (await fetch(API + '/health')).json();
+    st.innerHTML = '<span class="dot on"></span> <span>ONLINE</span>';
+    const u = d.uptime_seconds, h = Math.floor(u/3600), m = Math.floor(u%3600/60), s = Math.floor(u%60);
+    document.getElementById('uptime-display').textContent = `UPTIME: ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    document.getElementById('kpi-alerts').textContent = d.total_alerts.toLocaleString();
+  } catch {
+    st.innerHTML = '<span class="dot off"></span> <span>OFFLINE: start run.sh / run.bat</span>';
   }
+}
+
+function setThresholdUI(eff, level){
+  document.getElementById('kpi-threshold').textContent = eff.toFixed(4);
+  document.getElementById('eff-threshold').textContent = eff.toFixed(4);
+  document.getElementById('kpi-scrutiny').textContent = 'Scrutiny Policy: ' + String(level).toUpperCase();
+  document.querySelectorAll('#scrutiny-group button').forEach(b => b.classList.toggle('active', b.dataset.val === level));
 }
 
 async function loadModelInfo(){
-  try{
-    const r=await fetch(API+'/model/info');
-    const d=await r.json();
-    document.getElementById('kpi-model').textContent=d.model_type||'Hybrid';
-    document.getElementById('kpi-features').textContent=d.n_features+' features';
-    document.getElementById('kpi-classes').textContent=d.n_classes;
-    const cls=d.classes||[];
-    document.getElementById('kpi-class-list').textContent=cls.length>4?cls.slice(0,4).join(', ')+' ...':cls.join(', ');
-    document.getElementById('kpi-threshold').textContent=d.ae_effective_threshold?.toFixed(4)||'--';
-    document.getElementById('kpi-scrutiny').textContent='Scrutiny: '+d.scrutiny_level;
-    document.getElementById('eff-threshold').textContent=d.ae_effective_threshold?.toFixed(4)||'--';
-    // set active scrutiny button
-    document.querySelectorAll('#scrutiny-group button').forEach(b=>{
-      b.classList.toggle('active',b.dataset.val===d.scrutiny_level);
-    });
-  }catch{}
+  try {
+    const d = await (await fetch(API + '/model/info')).json();
+    document.getElementById('kpi-model').textContent = 'Random Forest + Autoencoder';
+    document.getElementById('kpi-features').textContent = d.n_features + ' flow features per prediction';
+    document.getElementById('kpi-classes').textContent = d.n_classes;
+    document.getElementById('kpi-class-list').textContent = d.classes.map(clean).join(', ');
+    setThresholdUI(d.ae_effective_threshold, d.scrutiny_level);
+  } catch { document.getElementById('kpi-model').textContent = 'API offline'; }
 }
 
-// ── Scrutiny Change ───────────────────────────
-document.querySelectorAll('#scrutiny-group button').forEach(btn=>{
-  btn.addEventListener('click',async()=>{
-    const val=btn.dataset.val;
-    try{
-      const r=await fetch(API+'/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({scrutiny:val})});
-      const d=await r.json();
-      document.querySelectorAll('#scrutiny-group button').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById('kpi-threshold').textContent=d.effective_threshold.toFixed(4);
-      document.getElementById('kpi-scrutiny').textContent='Scrutiny: '+d.scrutiny;
-      document.getElementById('eff-threshold').textContent=d.effective_threshold.toFixed(4);
-    }catch{}
-  });
-});
+document.querySelectorAll('#scrutiny-group button').forEach(btn => btn.addEventListener('click', async () => {
+  try {
+    const r = await fetch(API + '/settings', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({scrutiny: btn.dataset.val})});
+    const d = await r.json();
+    setThresholdUI(d.effective_threshold, d.scrutiny);
+  } catch { showError('Could not change the scrutiny policy: the API is offline.'); }
+}));
 
-// ── Analyze ───────────────────────────────────
+// ── Analysis ───────────────────────────────────────────────
+function showError(msg){ const b = document.getElementById('error-box'); b.textContent = msg; b.className = 'error-box show'; }
+function hideError(){ document.getElementById('error-box').className = 'error-box'; }
+
+function parseInput(){
+  const raw = document.getElementById('flow-input').value.trim();
+  if (!raw) { showError('Select a test flow or paste 78 comma-separated values first.'); return null; }
+  const vals = raw.split(/[\s,]+/).filter(Boolean).map(Number);
+  if (vals.some(v => !Number.isFinite(v))) { showError('Every value must be a number.'); return null; }
+  if (vals.length !== 78) { showError(`Expected 78 values, got ${vals.length}.`); return null; }
+  return vals;
+}
+
 async function analyzeFlow(){
-  const sel=document.getElementById('sample-select').value;
-  const raw=document.getElementById('flow-input').value.trim();
-  let features;
-  if(raw){
-    features=raw.split(',').map(Number);
-  }else if(sel==='random'){
-    features=randomAnomaly();
-  }else if(sel&&SAMPLES[sel]){
-    features=SAMPLES[sel];
-  }else{
-    alert('Select a sample or paste feature values.');return;
-  }
-  try{
-    const r=await fetch(API+'/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({features})});
-    if(!r.ok){const e=await r.json();alert(e.detail||'Error');return;}
-    const d=await r.json();
+  hideError();
+  const features = parseInput(); if (!features) return;
+  const btn = document.getElementById('btn-analyze'); btn.disabled = true;
+  try {
+    const r = await fetch(API + '/predict', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({features})});
+    const d = await r.json();
+    if (!r.ok) throw new Error(typeof d.detail === 'string' ? d.detail : 'The API rejected this input.');
     showResult(d);
-    loadAlerts();
-    pollHealth();
-  }catch(e){alert('API unreachable: '+e.message);}
+    loadAlerts(true); pollHealth();
+  } catch (e) { showError('Analysis failed: ' + e.message); }
+  finally { btn.disabled = false; }
 }
 
 function showResult(d){
-  const card=document.getElementById('result-card');
-  const isBenign=d.prediction==='BENIGN'&&!d.is_anomaly;
-  card.className='result-card show '+(isBenign?'benign':'threat');
-  document.getElementById('res-prediction').textContent=d.prediction;
-  const badge=document.getElementById('res-badge');
-  if(isBenign){badge.className='badge badge-green';badge.textContent='SAFE';}
-  else{badge.className='badge badge-red';badge.textContent='THREAT';}
-  document.getElementById('res-confidence').textContent=(d.confidence*100).toFixed(1)+'%';
-  document.getElementById('res-anomaly').textContent=d.anomaly_score.toFixed(6);
-  document.getElementById('res-is-anomaly').textContent=d.is_anomaly?'YES':'NO';
-  document.getElementById('res-is-anomaly').style.color=d.is_anomaly?'var(--red)':'var(--green)';
-  document.getElementById('res-threshold').textContent=d.threshold_used.toFixed(4);
-  document.getElementById('res-timestamp').textContent=new Date(d.timestamp).toLocaleString();
+  const pred = clean(d.prediction);
+  const card = document.getElementById('result-card');
+  const isBenign = pred === 'BENIGN' && !d.is_anomaly;
+  card.className = 'result-card show ' + (isBenign ? 'benign' : 'threat');
+  document.getElementById('res-prediction').textContent = pred;
+  const badge = document.getElementById('res-badge');
+  if (isBenign) { badge.className = 'badge badge-green'; badge.textContent = 'CLEAN TRAFFIC'; }
+  else if (pred === 'BENIGN') { badge.className = 'badge badge-amber'; badge.textContent = 'ANOMALOUS'; }
+  else { badge.className = 'badge badge-red'; badge.textContent = 'MALICIOUS VECTOR'; }
+  document.getElementById('res-confidence').textContent = (d.confidence * 100).toFixed(2) + '%';
+  document.getElementById('res-anomaly').textContent = d.anomaly_score.toFixed(6);
+  const ia = document.getElementById('res-is-anomaly');
+  ia.textContent = d.is_anomaly ? 'TRUE' : 'FALSE';
+  ia.style.color = d.is_anomaly ? 'var(--red-light)' : 'var(--green-light)';
+  document.getElementById('res-threshold').textContent = d.threshold_used.toFixed(4);
+  document.getElementById('res-timestamp').textContent = d.timestamp;
 
-  // SHAP bars
-  const shapDiv=document.getElementById('shap-bars');shapDiv.innerHTML='';
-  const shap=d.shap_top_features||[];
-  if(shap.length){
-    const maxAbs=Math.max(...shap.map(s=>Math.abs(s.shap_value)),0.001);
-    shap.forEach(s=>{
-      const pct=Math.min(Math.abs(s.shap_value)/maxAbs*100,100);
-      const cls=s.shap_value>=0?'pos':'neg';
-      shapDiv.innerHTML+=`<div class="shap-bar"><span class="name" title="${s.feature}">${s.feature}</span><div class="bar-wrap"><div class="bar ${cls}" style="width:${pct}%"></div></div><span class="val">${s.shap_value>=0?'+':''}${s.shap_value.toFixed(4)}</span></div>`;
-    });
-  }else{shapDiv.innerHTML='<span style="color:var(--text3);font-size:.84rem">No SHAP data</span>';}
+  const shapDiv = document.getElementById('shap-bars');
+  const feats = d.shap_top_features || [];
+  if (!feats.length) { shapDiv.innerHTML = '<div class="mini-note">No SHAP explanation returned.</div>'; }
+  else {
+    const maxAbs = Math.max(...feats.map(s => Math.abs(s.shap_value)), 1e-9);
+    shapDiv.innerHTML = feats.map(s => {
+      const pct = Math.min(Math.abs(s.shap_value) / maxAbs * 100, 100);
+      const v = Number(s.value);
+      const shown = Number.isInteger(v) ? v : v.toPrecision(4);
+      return `<div class="shap-bar" title="${esc(s.feature)} = ${esc(shown)}">
+        <span class="name">${esc(s.feature)} = ${esc(shown)}</span>
+        <div class="bar-wrap"><div class="bar ${s.shap_value >= 0 ? 'pos' : 'neg'}" style="width:${pct}%"></div></div>
+        <span class="val">${s.shap_value >= 0 ? '+' : ''}${s.shap_value.toFixed(4)}</span></div>`;
+    }).join('');
+  }
 
-  // Class probs chart
-  const probs=d.class_probabilities||{};
-  const entries=Object.entries(probs).sort((a,b)=>b[1]-a[1]);
-  const colors=entries.map(([c])=>c==='BENIGN'?'#22c55e':'#ef4444');
-  Plotly.newPlot('class-probs-chart',[{
-    type:'bar',x:entries.map(e=>(e[1]*100).toFixed(1)),y:entries.map(e=>e[0]),
-    orientation:'h',marker:{color:colors},
-    text:entries.map(e=>(e[1]*100).toFixed(1)+'%'),textposition:'auto',
-    textfont:{color:'#fff',size:11}
-  }],{
-    margin:{l:120,r:20,t:10,b:30},paper_bgcolor:'transparent',plot_bgcolor:'transparent',
-    xaxis:{title:'Probability %',color:'#64748b',gridcolor:'#1e293b',range:[0,100]},
-    yaxis:{color:'#94a3b8',autorange:'reversed'},font:{family:'-apple-system,sans-serif'}
-  },{responsive:true,displayModeBar:false});
+  const entries = Object.entries(d.class_probabilities).map(([k, v]) => [clean(k), v]).sort((a, b) => b[1] - a[1]).slice(0, 6).reverse();
+  Plotly.newPlot('class-probs-chart', [{
+    type: 'bar', orientation: 'h',
+    x: entries.map(e => e[1] * 100), y: entries.map(e => e[0]),
+    marker: { color: entries.map(e => e[0] === 'BENIGN' ? '#4ade80' : '#60a5fa') },
+    text: entries.map(e => (e[1] * 100).toFixed(1) + '%'), textposition: 'outside', cliponaxis: false,
+    textfont: { color: '#d4d4d8', size: 10, family: 'JetBrains Mono, Consolas, ui-monospace, monospace' },
+    hovertemplate: '%{y}: %{x:.2f}%<extra></extra>'
+  }], {
+    margin: { l: 170, r: 50, t: 4, b: 30 }, paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
+    xaxis: { ...axis, range: [0, 100], ticksuffix: '%' }, yaxis: { ...axis, color: '#a1a1aa' },
+    font: { family: 'Inter, Segoe UI, Arial, sans-serif' }, bargap: 0.35
+  }, plotCfg);
+}
+
+async function analyzeBatch(){
+  hideError();
+  const keys = Object.keys(SAMPLES);
+  const btn = document.getElementById('btn-batch'); btn.disabled = true;
+  try {
+    const r = await fetch(API + '/predict/batch', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({flows: keys.map(k => SAMPLES[k].features)})});
+    const d = await r.json();
+    if (!r.ok) throw new Error('The API rejected the batch.');
+    const res = d.results;
+    let correct = 0;
+    const rows = res.map((x, i) => {
+      if (x.error) return `<tr><td>SEQ-${String(i+1).padStart(3,'0')}</td><td>${esc(keys[i])}</td><td colspan="4">${esc(x.error)}</td></tr>`;
+      const pred = clean(x.prediction), ok = pred === keys[i]; if (ok) correct++;
+      const col = pred === 'BENIGN' ? 'var(--green-light)' : 'var(--red-light)';
+      return `<tr><td>SEQ-${String(i+1).padStart(3,'0')}</td><td>${esc(keys[i])}</td>
+        <td style="color:${col};font-weight:600">${esc(pred)}</td><td>${(x.confidence*100).toFixed(2)}%</td>
+        <td>${x.anomaly_score.toFixed(6)}</td><td>${ok ? '<span class="badge badge-green">YES</span>' : '<span class="badge badge-red">NO</span>'}</td></tr>`;
+    }).join('');
+    document.querySelector('#batch-table tbody').innerHTML = rows;
+    const threats = res.filter(x => !x.error && clean(x.prediction) !== 'BENIGN').length;
+    document.getElementById('batch-summary').innerHTML =
+      `<span class="badge badge-blue">TOTAL = ${res.length}</span> <span class="badge badge-red">MALICIOUS = ${threats}</span> <span class="badge badge-green">CORRECT = ${correct}/${res.length}</span>`;
+    document.getElementById('batch-result').className = 'result-card show';
+    loadAlerts(true); pollHealth();
+  } catch (e) { showError('Batch failed: ' + e.message); }
+  finally { btn.disabled = false; }
 }
 
 function clearResult(){
-  document.getElementById('result-card').className='result-card';
-  document.getElementById('batch-result').className='result-card';
-  document.getElementById('sample-select').value='';
-  document.getElementById('flow-input').value='';
+  hideError();
+  document.getElementById('result-card').className = 'result-card';
+  document.getElementById('batch-result').className = 'result-card';
+  sel.value = ''; document.getElementById('flow-input').value = '';
 }
 
-// ── Batch ─────────────────────────────────────
-async function analyzeBatch(){
-  const flows=Array.from({length:5},()=>{
-    const keys=Object.keys(SAMPLES);
-    const k=keys[Math.floor(Math.random()*keys.length)];
-    // add slight noise
-    return SAMPLES[k].map(v=>v+(Math.random()-.5)*Math.max(Math.abs(v)*0.05,1));
-  });
-  try{
-    const r=await fetch(API+'/predict/batch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({flows})});
-    const d=await r.json();
-    showBatchResult(d);
-    loadAlerts();pollHealth();
-  }catch(e){alert('API unreachable: '+e.message);}
+// ── Demo mode: replays real held-out test flows through the live model ──
+const DEMO = [{"label":"BENIGN","row":429461,"features":[53.0,267.0,2.0,2.0,62.0,94.0,31.0,31.0,31.0,0.0,47.0,47.0,47.0,0.0,584269.6629,14981.27341,89.0,90.4157066,184.0,4.0,79.0,79.0,0.0,79.0,79.0,4.0,4.0,0.0,4.0,4.0,0.0,0.0,0.0,0.0,64.0,64.0,7490.636704,7490.636704,31.0,47.0,37.4,8.76356092,76.8,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,46.75,31.0,47.0,64.0,0.0,0.0,0.0,0.0,0.0,0.0,2.0,62.0,2.0,94.0,-1.0,-1.0,1.0,32.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},{"label":"BENIGN","row":90140,"features":[53.0,179289.0,2.0,2.0,82.0,218.0,41.0,41.0,41.0,0.0,109.0,109.0,109.0,0.0,1673.276107,22.3103481,59763.0,103508.2223,179284.0,2.0,3.0,3.0,0.0,3.0,3.0,2.0,2.0,0.0,2.0,2.0,0.0,0.0,0.0,0.0,64.0,64.0,11.15517405,11.15517405,41.0,109.0,68.2,37.24513391,1387.2,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,85.25,41.0,109.0,64.0,0.0,0.0,0.0,0.0,0.0,0.0,2.0,82.0,2.0,218.0,-1.0,-1.0,1.0,32.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},{"label":"BENIGN","row":186765,"features":[443.0,4217.0,1.0,1.0,6.0,6.0,6.0,6.0,6.0,0.0,6.0,6.0,6.0,0.0,2845.624852,474.2708086,4217.0,0.0,4217.0,4217.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,20.0,20.0,237.1354043,237.1354043,6.0,6.0,6.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0,9.0,6.0,6.0,20.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,6.0,1.0,6.0,0.0,0.0,0.0,20.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},{"label":"BENIGN","row":40206,"features":[54238.0,3831536.0,1.0,5.0,6.0,30.0,6.0,6.0,6.0,0.0,6.0,6.0,6.0,0.0,9.39570971,1.565951618,766307.2,1697008.855,3801934.0,4.0,0.0,0.0,0.0,0.0,0.0,3830965.0,957741.25,1896173.015,3801934.0,4.0,0.0,0.0,0.0,0.0,20.0,100.0,0.260991936,1.304959682,6.0,6.0,6.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,1.0,0.0,0.0,5.0,7.0,6.0,6.0,20.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,6.0,5.0,30.0,229.0,0.0,0.0,20.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},{"label":"BENIGN","row":322584,"features":[35502.0,35.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,57142.85714,35.0,0.0,35.0,35.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,32.0,32.0,28571.42857,28571.42857,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,32.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,1.0,0.0,370.0,374.0,0.0,32.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},{"label":"BENIGN","row":184257,"features":[22.0,1349261.0,43.0,40.0,2728.0,6634.0,456.0,0.0,63.44186047,108.4069279,976.0,0.0,165.85,325.1423791,6938.613063,61.51515533,16454.40244,106305.5503,958327.0,0.0,1349261.0,32125.2619,155401.1633,999681.0,0.0,390825.0,10021.15385,23248.03571,98875.0,0.0,0.0,0.0,0.0,0.0,1392.0,1296.0,31.86929734,29.64585799,0.0,976.0,111.452381,241.6427915,58391.23867,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0,112.7951807,63.44186047,165.85,1392.0,0.0,0.0,0.0,0.0,0.0,0.0,43.0,2728.0,40.0,6634.0,29200.0,243.0,24.0,32.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},{"label":"BENIGN","row":13310,"features":[53.0,32613.0,2.0,2.0,68.0,180.0,34.0,34.0,34.0,0.0,90.0,90.0,90.0,0.0,7604.3295618312,122.6504768037,10871.0,18784.9705083612,32562.0,3.0,48.0,48.0,0.0,48.0,48.0,3.0,3.0,0.0,3.0,3.0,0.0,0.0,0.0,0.0,64.0,40.0,61.3252384019,61.3252384019,34.0,90.0,56.4,30.6724632203,940.8,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,70.5,34.0,90.0,64.0,0.0,0.0,0.0,0.0,0.0,0.0,2.0,68.0,2.0,180.0,-1.0,-1.0,1.0,32.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},{"label":"BENIGN","row":235530,"features":[80.0,50653.0,1.0,1.0,6.0,6.0,6.0,6.0,6.0,0.0,6.0,6.0,6.0,0.0,236.9060075,39.48433459,50653.0,0.0,50653.0,50653.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,20.0,20.0,19.7421673,19.7421673,6.0,6.0,6.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,1.0,0.0,0.0,1.0,9.0,6.0,6.0,20.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,6.0,1.0,6.0,237.0,62.0,0.0,20.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},{"label":"DDoS","row":330083,"features":[80.0,8030049.0,8.0,5.0,56.0,11607.0,20.0,0.0,7.0,5.656854249,10135.0,0.0,2321.4,4413.201989,1452.419531,1.618919137,669170.75,1928944.147,6671974.0,1.0,6692943.0,956134.7143,2520452.861,6671974.0,1.0,1338015.0,334503.75,668214.968,1336826.0,6.0,0.0,0.0,0.0,0.0,172.0,112.0,0.996257931,0.622661207,0.0,10135.0,833.5,2705.044255,7317264.423,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,897.6153846,7.0,2321.4,172.0,0.0,0.0,0.0,0.0,0.0,0.0,8.0,56.0,5.0,11607.0,256.0,229.0,6.0,20.0,20011.0,0.0,20011.0,20011.0,6671974.0,0.0,6671974.0,6671974.0]},{"label":"DDoS","row":489075,"features":[80.0,10569779.0,4.0,0.0,24.0,0.0,6.0,6.0,6.0,0.0,0.0,0.0,0.0,0.0,2.27062458,0.37843743,3523259.667,6102462.153,10600000.0,1.0,10600000.0,3523259.667,6102462.153,10600000.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,80.0,0.0,0.37843743,0.0,6.0,6.0,6.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,7.5,6.0,0.0,80.0,0.0,0.0,0.0,0.0,0.0,0.0,4.0,24.0,0.0,0.0,256.0,-1.0,3.0,20.0,3.0,0.0,3.0,3.0,10600000.0,0.0,10600000.0,10600000.0]},{"label":"DDoS","row":90939,"features":[80.0,1436377.0,3.0,4.0,26.0,11607.0,20.0,0.0,8.666666667,10.26320288,11595.0,0.0,2901.75,5795.50069,8098.848701,4.873372381,239396.1667,586075.1407,1435717.0,2.0,431.0,215.5,301.9345956,429.0,2.0,1436346.0,478782.0,828730.0296,1435717.0,187.0,0.0,0.0,0.0,0.0,72.0,92.0,2.088588163,2.784784218,0.0,11595.0,1454.125,4097.537534,16800000.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,1661.857143,8.666666667,2901.75,72.0,0.0,0.0,0.0,0.0,0.0,0.0,3.0,26.0,4.0,11607.0,8192.0,229.0,2.0,20.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},{"label":"DDoS","row":152435,"features":[80.0,1472479.0,3.0,5.0,26.0,11607.0,20.0,0.0,8.666666667,10.26320288,5840.0,0.0,2321.4,3173.373883,7900.282449,5.433014664,210354.1429,556070.7711,1471404.0,3.0,816.0,408.0,551.5432893,798.0,18.0,1472387.0,368096.75,735538.2524,1471404.0,3.0,0.0,0.0,0.0,0.0,72.0,112.0,2.037380499,3.395634165,0.0,5840.0,1292.555556,2554.159212,6523729.278,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,1454.125,8.666666667,2321.4,72.0,0.0,0.0,0.0,0.0,0.0,0.0,3.0,26.0,5.0,11607.0,8192.0,229.0,2.0,20.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},{"label":"DDoS","row":85368,"features":[80.0,78438213.0,8.0,4.0,56.0,11601.0,20.0,0.0,7.0,5.656854249,8760.0,0.0,2900.25,4128.319301,148.6137885,0.152986657,7130746.636,23200000.0,77100000.0,1.0,78400000.0,11200000.0,29100000.0,77100000.0,1.0,55417.0,18472.33333,17354.40524,34947.0,355.0,0.0,0.0,0.0,0.0,172.0,92.0,0.101991105,0.050995552,0.0,8760.0,897.1538462,2488.507044,6192667.308,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,971.9166667,7.0,2900.25,172.0,0.0,0.0,0.0,0.0,0.0,0.0,8.0,56.0,4.0,11601.0,256.0,229.0,6.0,20.0,1291007.0,0.0,1291007.0,1291007.0,77100000.0,0.0,77100000.0,77100000.0]},{"label":"DDoS","row":51226,"features":[80.0,10268830.0,5.0,0.0,30.0,0.0,6.0,6.0,6.0,0.0,0.0,0.0,0.0,0.0,2.921462328,0.486910388,2567207.5,5133711.678,10300000.0,1.0,10300000.0,2567207.5,5133711.678,10300000.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,100.0,0.0,0.486910388,0.0,6.0,6.0,6.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,7.2,6.0,0.0,100.0,0.0,0.0,0.0,0.0,0.0,0.0,5.0,30.0,0.0,0.0,256.0,-1.0,4.0,20.0,1055.0,0.0,1055.0,1055.0,10300000.0,0.0,10300000.0,10300000.0]},{"label":"DDoS","row":433434,"features":[80.0,54587.0,3.0,4.0,26.0,11607.0,20.0,0.0,8.666666667,10.26320288,11595.0,0.0,2901.75,5795.50069,213109.3484,128.2356605,9097.833333,21851.80833,53700.0,12.0,820.0,410.0,401.6366517,694.0,126.0,54541.0,18180.33333,30763.64595,53700.0,12.0,0.0,0.0,0.0,0.0,72.0,92.0,54.95814022,73.27752029,0.0,11595.0,1454.125,4097.537534,16800000.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,1661.857143,8.666666667,2901.75,72.0,0.0,0.0,0.0,0.0,0.0,0.0,3.0,26.0,4.0,11607.0,8192.0,229.0,2.0,20.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},{"label":"DDoS","row":368147,"features":[80.0,476056.0,3.0,6.0,26.0,11607.0,20.0,0.0,8.666666667,10.26320288,5840.0,0.0,1934.5,2538.919278,24436.20078,18.90533887,59507.0,167182.0887,473259.0,3.0,1640.0,820.0,1155.41248,1637.0,3.0,476001.0,95200.2,211342.3655,473259.0,47.0,0.0,0.0,0.0,0.0,72.0,132.0,6.301779623,12.60355925,0.0,5840.0,1163.3,2138.329153,4572451.567,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,2.0,1292.555556,8.666666667,1934.5,72.0,0.0,0.0,0.0,0.0,0.0,0.0,3.0,26.0,6.0,11607.0,8192.0,229.0,2.0,20.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},{"label":"BENIGN","row":330770,"features":[443.0,118268973.0,20.0,14.0,1018.0,4544.0,382.0,0.0,50.9,96.98990723,1418.0,0.0,324.5714286,520.8213505,47.02839518,0.287480301,3583908.273,14200000.0,58900000.0,1.0,118000000.0,6224682.789,18500000.0,58900000.0,1.0,118000000.0,9094819.923,22100000.0,59000000.0,2.0,0.0,0.0,0.0,0.0,648.0,456.0,0.16910606,0.118374242,0.0,1418.0,158.9142857,357.5996259,127877.4924,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0,163.5882353,50.9,324.5714286,648.0,0.0,0.0,0.0,0.0,0.0,0.0,20.0,1018.0,14.0,4544.0,29200.0,357.0,8.0,32.0,382166.0,430021.3321,686237.0,78095.0,58700000.0,273880.134,58900000.0,58500000.0]},{"label":"BENIGN","row":324931,"features":[443.0,4679835.0,13.0,13.0,1709.0,8491.0,847.0,0.0,131.4615384615,255.8057907165,2266.0,0.0,653.1538461538,820.8594932705,2179.5640230906,5.5557514314,187193.4,904015.393368387,4526083.0,1.0,4679835.0,389986.25,1302686.05614805,4526083.0,1.0,124928.0,10410.6666666667,15042.5920598409,33994.0,2.0,0.0,0.0,0.0,0.0,272.0,268.0,2.7778757157,2.7778757157,0.0,2266.0,377.7777777778,644.1519967149,414931.794871795,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,392.3076923077,131.4615384615,653.1538461538,272.0,0.0,0.0,0.0,0.0,0.0,0.0,13.0,1709.0,13.0,8491.0,8192.0,8192.0,12.0,20.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},{"label":"BENIGN","row":226030,"features":[53.0,282937.0,1.0,1.0,55.0,175.0,55.0,55.0,55.0,0.0,175.0,175.0,175.0,0.0,812.9018120642,7.0687114093,282937.0,0.0,282937.0,282937.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,32.0,40.0,3.5343557046,3.5343557046,55.0,175.0,95.0,69.2820323028,4800.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,142.5,55.0,175.0,32.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,55.0,1.0,175.0,-1.0,-1.0,0.0,32.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},{"label":"BENIGN","row":416353,"features":[53.0,30790.0,2.0,2.0,74.0,106.0,37.0,37.0,37.0,0.0,53.0,53.0,53.0,0.0,5846.053914,129.9123092,10263.33333,17770.55262,30783.0,3.0,3.0,3.0,0.0,3.0,3.0,4.0,4.0,0.0,4.0,4.0,0.0,0.0,0.0,0.0,64.0,40.0,64.9561546,64.9561546,37.0,53.0,43.4,8.76356092,76.8,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,54.25,37.0,53.0,64.0,0.0,0.0,0.0,0.0,0.0,0.0,2.0,74.0,2.0,106.0,-1.0,-1.0,1.0,32.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},{"label":"PortScan","row":428492,"features":[648.0,66.0,1.0,1.0,2.0,6.0,2.0,2.0,2.0,0.0,6.0,6.0,6.0,0.0,121212.1212,30303.0303,66.0,0.0,66.0,66.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,24.0,20.0,15151.51515,15151.51515,2.0,6.0,3.333333333,2.309401077,5.333333333,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,5.0,2.0,6.0,24.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,2.0,1.0,6.0,1024.0,0.0,0.0,24.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},{"label":"PortScan","row":213666,"features":[9898.0,87.0,1.0,1.0,0.0,6.0,0.0,0.0,0.0,0.0,6.0,6.0,6.0,0.0,68965.51724,22988.50575,87.0,0.0,87.0,87.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,40.0,20.0,11494.25287,11494.25287,0.0,6.0,2.0,3.464101615,12.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,3.0,0.0,6.0,40.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,1.0,6.0,29200.0,0.0,0.0,40.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},{"label":"PortScan","row":262016,"features":[2105.0,46.0,1.0,1.0,2.0,6.0,2.0,2.0,2.0,0.0,6.0,6.0,6.0,0.0,173913.0435,43478.26087,46.0,0.0,46.0,46.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,24.0,20.0,21739.13043,21739.13043,2.0,6.0,3.333333333,2.309401077,5.333333333,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,5.0,2.0,6.0,24.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,2.0,1.0,6.0,1024.0,0.0,0.0,24.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},{"label":"PortScan","row":72386,"features":[981.0,73.0,1.0,1.0,2.0,6.0,2.0,2.0,2.0,0.0,6.0,6.0,6.0,0.0,109589.0411,27397.26027,73.0,0.0,73.0,73.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,24.0,20.0,13698.63014,13698.63014,2.0,6.0,3.333333333,2.309401077,5.333333333,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,5.0,2.0,6.0,24.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,2.0,1.0,6.0,1024.0,0.0,0.0,24.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},{"label":"PortScan","row":113514,"features":[61532.0,43.0,1.0,1.0,0.0,6.0,0.0,0.0,0.0,0.0,6.0,6.0,6.0,0.0,139534.8837,46511.62791,43.0,0.0,43.0,43.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,40.0,20.0,23255.81395,23255.81395,0.0,6.0,2.0,3.464101615,12.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,3.0,0.0,6.0,40.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,1.0,6.0,29200.0,0.0,0.0,40.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},{"label":"PortScan","row":138338,"features":[8193.0,37.0,1.0,1.0,2.0,6.0,2.0,2.0,2.0,0.0,6.0,6.0,6.0,0.0,216216.2162,54054.05405,37.0,0.0,37.0,37.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,24.0,20.0,27027.02703,27027.02703,2.0,6.0,3.333333333,2.309401077,5.333333333,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,5.0,2.0,6.0,24.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,2.0,1.0,6.0,1024.0,0.0,0.0,24.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},{"label":"PortScan","row":134761,"features":[12000.0,52.0,1.0,1.0,2.0,6.0,2.0,2.0,2.0,0.0,6.0,6.0,6.0,0.0,153846.1538,38461.53846,52.0,0.0,52.0,52.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,24.0,20.0,19230.76923,19230.76923,2.0,6.0,3.333333333,2.309401077,5.333333333,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,5.0,2.0,6.0,24.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,2.0,1.0,6.0,1024.0,0.0,0.0,24.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},{"label":"PortScan","row":45501,"features":[7938.0,69.0,1.0,1.0,2.0,6.0,2.0,2.0,2.0,0.0,6.0,6.0,6.0,0.0,115942.029,28985.50725,69.0,0.0,69.0,69.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,24.0,20.0,14492.75362,14492.75362,2.0,6.0,3.333333333,2.309401077,5.333333333,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,5.0,2.0,6.0,24.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,2.0,1.0,6.0,1024.0,0.0,0.0,24.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},{"label":"BENIGN","row":83231,"features":[443.0,360046.0,9.0,9.0,2085.0,5282.0,1501.0,0.0,231.6666667,489.4606726,1460.0,2.0,586.8888889,689.7639894,20461.27439,49.99361193,21179.17647,37622.90322,87135.0,2.0,360046.0,45005.75,47332.45671,93638.0,4.0,268126.0,33515.75,45276.8232,88632.0,2.0,0.0,0.0,0.0,0.0,192.0,184.0,24.99680596,24.99680596,0.0,1501.0,387.7368421,598.5762591,358293.538,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,409.2777778,231.6666667,586.8888889,192.0,0.0,0.0,0.0,0.0,0.0,0.0,9.0,2085.0,9.0,5282.0,8192.0,65535.0,8.0,20.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},{"label":"BENIGN","row":240705,"features":[53.0,275.0,2.0,2.0,66.0,200.0,33.0,33.0,33.0,0.0,100.0,100.0,100.0,0.0,967272.727272727,14545.4545454545,91.6666666667,117.547153659,225.0,3.0,3.0,3.0,0.0,3.0,3.0,47.0,47.0,0.0,47.0,47.0,0.0,0.0,0.0,0.0,80.0,80.0,7272.7272727273,7272.7272727273,33.0,100.0,59.8,36.6974113528,1346.7,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,74.75,33.0,100.0,80.0,0.0,0.0,0.0,0.0,0.0,0.0,2.0,66.0,2.0,200.0,-1.0,-1.0,1.0,40.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},{"label":"BENIGN","row":299880,"features":[58330.0,130.0,1.0,1.0,6.0,6.0,6.0,6.0,6.0,0.0,6.0,6.0,6.0,0.0,92307.69231,15384.61538,130.0,0.0,130.0,130.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,20.0,20.0,7692.307692,7692.307692,6.0,6.0,6.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,1.0,0.0,0.0,1.0,9.0,6.0,6.0,20.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,6.0,1.0,6.0,286.0,256.0,0.0,20.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},{"label":"BENIGN","row":98392,"features":[53.0,154237.0,1.0,1.0,54.0,149.0,54.0,54.0,54.0,0.0,149.0,149.0,149.0,0.0,1316.156305,12.96705719,154237.0,0.0,154237.0,154237.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,32.0,32.0,6.483528596,6.483528596,54.0,149.0,85.66666667,54.84827557,3008.333333,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,128.5,54.0,149.0,32.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,54.0,1.0,149.0,-1.0,-1.0,0.0,32.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},{"label":"DoS Hulk","row":150788,"features":[80.0,99512682.0,8.0,6.0,322.0,11595.0,316.0,0.0,40.25,111.4396057,4344.0,0.0,1932.5,1754.831473,119.7535808,0.140685586,7654821.692,27600000.0,99400000.0,1.0,99400000.0,14200000.0,37600000.0,99400000.0,1.0,147440.0,29488.0,59823.51319,136171.0,47.0,0.0,0.0,0.0,0.0,252.0,200.0,0.080391764,0.060293823,0.0,4344.0,794.4666667,1425.20018,2031195.552,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,851.2142857,40.25,1932.5,252.0,0.0,0.0,0.0,0.0,0.0,0.0,8.0,322.0,6.0,11595.0,251.0,235.0,2.0,20.0,2009.0,0.0,2009.0,2009.0,99400000.0,0.0,99400000.0,99400000.0]},{"label":"DoS Hulk","row":402887,"features":[80.0,99815701.0,7.0,6.0,323.0,11595.0,323.0,0.0,46.14285714,122.0825248,5792.0,0.0,1932.5,2181.008184,119.4000531,0.130240031,8317975.083,28500000.0,98700000.0,2.0,99700000.0,16600000.0,40200000.0,98700000.0,2.0,143357.0,28671.4,57030.12937,130210.0,46.0,0.0,0.0,0.0,0.0,240.0,200.0,0.070129248,0.060110784,0.0,5792.0,851.2857143,1667.564481,2780771.297,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,916.7692308,46.14285714,1932.5,240.0,0.0,0.0,0.0,0.0,0.0,0.0,7.0,323.0,6.0,11595.0,274.0,235.0,1.0,32.0,5.0,0.0,5.0,5.0,98700000.0,0.0,98700000.0,98700000.0]},{"label":"DoS Hulk","row":267325,"features":[80.0,85886833.0,8.0,7.0,380.0,11595.0,356.0,0.0,47.5,124.6881825,5792.0,0.0,1656.428571,2429.118623,139.4276583,0.174648424,6134773.786,22700000.0,84900000.0,1.0,85900000.0,12300000.0,32000000.0,84900000.0,1.0,85900000.0,14300000.0,35100000.0,85900000.0,48.0,0.0,0.0,0.0,0.0,224.0,232.0,0.093145826,0.081502598,0.0,5792.0,748.8125,1746.71857,3051025.763,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,798.7333333,47.5,1656.428571,224.0,0.0,0.0,0.0,0.0,0.0,0.0,8.0,380.0,7.0,11595.0,0.0,235.0,4.0,20.0,10013.0,0.0,10013.0,10013.0,84900000.0,0.0,84900000.0,84900000.0]},{"label":"DoS Hulk","row":471943,"features":[80.0,85629092.0,6.0,6.0,376.0,11595.0,358.0,0.0,62.66666667,144.7130494,10136.0,0.0,1932.5,4060.245892,139.8006182,0.140139288,7784462.909,25800000.0,85500000.0,44.0,85500000.0,17100000.0,38200000.0,85500000.0,50.0,85600000.0,17100000.0,38200000.0,85500000.0,44.0,0.0,0.0,0.0,0.0,164.0,200.0,0.070069644,0.070069644,0.0,10136.0,921.3076923,2797.753962,7827427.231,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,998.0833333,62.66666667,1932.5,164.0,0.0,0.0,0.0,0.0,0.0,0.0,6.0,376.0,6.0,11595.0,0.0,235.0,3.0,20.0,5070.0,0.0,5070.0,5070.0,85500000.0,0.0,85500000.0,85500000.0]},{"label":"DoS Hulk","row":482751,"features":[80.0,97401603.0,9.0,7.0,367.0,11595.0,367.0,0.0,40.77777778,122.3333333,5792.0,0.0,1656.428571,2118.227235,122.8111205,0.164268344,6493440.2,25100000.0,97400000.0,3.0,97400000.0,12200000.0,34400000.0,97400000.0,191.0,16633.0,2772.166667,4291.105611,10034.0,47.0,0.0,0.0,0.0,0.0,296.0,232.0,0.092400943,0.0718674,0.0,5792.0,703.6470588,1537.962773,2365329.493,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,747.625,40.77777778,1656.428571,296.0,0.0,0.0,0.0,0.0,0.0,0.0,9.0,367.0,7.0,11595.0,251.0,235.0,1.0,32.0,6029.0,0.0,6029.0,6029.0,97400000.0,0.0,97400000.0,97400000.0]},{"label":"DoS Hulk","row":106041,"features":[80.0,97641009.0,5.0,6.0,350.0,11595.0,338.0,0.0,70.0,149.8465882,7251.0,0.0,1932.5,3131.772645,122.3358927,0.112657582,9764100.9,30900000.0,97600000.0,20.0,97600000.0,24400000.0,48800000.0,97600000.0,429.0,97600000.0,19500000.0,43700000.0,97600000.0,46.0,0.0,0.0,0.0,0.0,144.0,200.0,0.051207992,0.06144959,0.0,7251.0,995.9166667,2328.860215,5423589.902,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,1086.454545,70.0,1932.5,144.0,0.0,0.0,0.0,0.0,0.0,0.0,5.0,350.0,6.0,11595.0,0.0,235.0,2.0,20.0,16966.0,0.0,16966.0,16966.0,97600000.0,0.0,97600000.0,97600000.0]},{"label":"DoS Hulk","row":486854,"features":[80.0,98462936.0,9.0,4.0,359.0,11595.0,359.0,0.0,39.88888889,119.6666667,5803.0,0.0,2898.75,3347.191198,121.4060893,0.132029376,8205244.667,28400000.0,98500000.0,0.0,98500000.0,12300000.0,34800000.0,98500000.0,0.0,5666.0,1888.666667,2739.49308,5049.0,190.0,0.0,0.0,0.0,0.0,296.0,136.0,0.091404953,0.040624423,0.0,5803.0,853.8571429,2096.589643,4395688.132,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,919.5384615,39.88888889,2898.75,296.0,0.0,0.0,0.0,0.0,0.0,0.0,9.0,359.0,4.0,11595.0,251.0,235.0,1.0,32.0,2014.0,0.0,2014.0,2014.0,98500000.0,0.0,98500000.0,98500000.0]},{"label":"DoS Hulk","row":441503,"features":[80.0,98651296.0,6.0,7.0,376.0,11595.0,376.0,0.0,62.66666667,153.5013572,5792.0,0.0,1656.428571,2119.480114,121.3466065,0.131777286,8220941.333,28500000.0,98700000.0,1.0,98700000.0,19700000.0,44100000.0,98700000.0,1.0,1215.0,202.5,281.2143311,756.0,1.0,0.0,0.0,0.0,0.0,200.0,232.0,0.060820286,0.070957,0.0,5792.0,855.0714286,1665.597165,2774213.918,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0,920.8461538,62.66666667,1656.428571,200.0,0.0,0.0,0.0,0.0,0.0,0.0,6.0,376.0,7.0,11595.0,274.0,235.0,1.0,32.0,4.0,0.0,4.0,4.0,98700000.0,0.0,98700000.0,98700000.0]},{"label":"BENIGN","row":218150,"features":[443.0,163787.0,13.0,9.0,1082.0,5146.0,461.0,0.0,83.23076923,134.3255708,2920.0,0.0,571.7777778,993.1823571,38024.99588,134.3207947,7799.380952,11388.14232,34187.0,4.0,163787.0,13648.91667,16473.92184,49100.0,18.0,136316.0,17039.5,20275.39644,56629.0,4.0,0.0,0.0,0.0,0.0,272.0,192.0,79.37137868,54.94941601,0.0,2920.0,270.7826087,655.5289298,429718.1779,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0,283.0909091,83.23076923,571.7777778,272.0,0.0,0.0,0.0,0.0,0.0,0.0,13.0,1082.0,9.0,5146.0,8192.0,127.0,7.0,20.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},{"label":"BENIGN","row":211460,"features":[53.0,61698.0,1.0,1.0,48.0,160.0,48.0,48.0,48.0,0.0,160.0,160.0,160.0,0.0,3371.2600084282,32.4159616195,61698.0,0.0,61698.0,61698.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,20.0,20.0,16.2079808098,16.2079808098,48.0,160.0,85.3333333333,64.6632301492,4181.3333333333,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,128.0,48.0,160.0,20.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,48.0,1.0,160.0,-1.0,-1.0,0.0,20.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},{"label":"BENIGN","row":453985,"features":[80.0,50674.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,39.4679717409,50674.0,0.0,50674.0,50674.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,32.0,32.0,19.7339858705,19.7339858705,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,1.0,0.0,0.0,1.0,0.0,0.0,0.0,32.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,1.0,0.0,237.0,150.0,0.0,32.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},{"label":"BENIGN","row":299970,"features":[443.0,7727.0,2.0,0.0,12.0,0.0,6.0,6.0,6.0,0.0,0.0,0.0,0.0,0.0,1552.995988,258.8326647,7727.0,0.0,7727.0,7727.0,7727.0,7727.0,0.0,7727.0,7727.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,40.0,0.0,258.8326647,0.0,6.0,6.0,6.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,9.0,6.0,0.0,40.0,0.0,0.0,0.0,0.0,0.0,0.0,2.0,12.0,0.0,0.0,255.0,-1.0,1.0,20.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]}];
+let demoTimer = null, demoIdx = 0, demoOk = 0, demoBusy = false;
+function demoStatus(msg){ const el = document.getElementById('demo-status'); el.textContent = msg; el.className = 'demo-status show'; }
+function toggleDemo(){
+  if (demoTimer) { stopDemo('Demo stopped after ' + demoIdx + ' flows: ' + demoOk + '/' + demoIdx + ' classified correctly.'); return; }
+  hideError(); demoIdx = 0; demoOk = 0;
+  document.getElementById('btn-demo').textContent = '■ Stop Demo';
+  demoStatus('Demo mode: sending ' + DEMO.length + ' real test flows to the live model...');
+  demoStep(); demoTimer = setInterval(demoStep, 1200);
+}
+function stopDemo(msg){
+  clearInterval(demoTimer); demoTimer = null;
+  document.getElementById('btn-demo').textContent = '▶ Start Demo';
+  if (msg) demoStatus(msg);
+}
+async function demoStep(){
+  if (demoBusy) return;
+  if (demoIdx >= DEMO.length) { stopDemo('Demo finished: ' + demoOk + '/' + DEMO.length + ' real test flows classified correctly.'); return; }
+  const f = DEMO[demoIdx]; demoBusy = true;
+  try {
+    const r = await fetch(API + '/predict', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({features: f.features})});
+    const d = await r.json();
+    if (!r.ok) throw new Error('rejected');
+    demoIdx++;
+    const pred = clean(d.prediction), ok = pred === f.label; if (ok) demoOk++;
+    sel.value = ''; document.getElementById('flow-input').value = f.features.join(',');
+    showResult(d);
+    demoStatus(`Demo flow ${demoIdx}/${DEMO.length} · test row ${f.row} · true ${f.label} → predicted ${pred} ${ok ? '✓' : '✗'} · correct so far ${demoOk}/${demoIdx}`);
+    loadAlerts(true); pollHealth();
+  } catch (e) {
+    stopDemo('Demo stopped: the API is not reachable. Start run.sh or run.bat first.');
+  } finally { demoBusy = false; }
 }
 
-function showBatchResult(d){
-  const card=document.getElementById('batch-result');
-  card.className='result-card show';
-  const results=d.results||[];
-  const threats=results.filter(r=>r.prediction&&r.prediction!=='BENIGN').length;
-  const anomalies=results.filter(r=>r.is_anomaly).length;
-  document.getElementById('batch-summary').innerHTML=`<span class="badge badge-blue">${results.length} flows</span> <span class="badge badge-red">${threats} threats</span> <span class="badge badge-amber">${anomalies} anomalies</span>`;
-  const tbody=document.querySelector('#batch-table tbody');tbody.innerHTML='';
-  results.forEach((r,i)=>{
-    if(r.error){tbody.innerHTML+=`<tr><td>${i+1}</td><td colspan="4" style="color:var(--red)">${r.error}</td></tr>`;return;}
-    const cls=r.prediction==='BENIGN'?'color:var(--green)':'color:var(--red)';
-    tbody.innerHTML+=`<tr><td>${i+1}</td><td style="${cls};font-weight:600">${r.prediction}</td><td>${(r.confidence*100).toFixed(1)}%</td><td>${r.anomaly_score.toFixed(6)}</td><td>${r.is_anomaly?'<span class="badge badge-red">YES</span>':'<span class="badge badge-green">NO</span>'}</td></tr>`;
-  });
+// ── Alerts, timeline and distribution (auto-refresh) ────────
+async function loadAlerts(force){
+  let d;
+  try { d = await (await fetch(API + '/alerts?limit=200')).json(); } catch { return; }
+  if (!force && d.total === lastAlertTotal) return;
+  lastAlertTotal = d.total;
+  const alerts = d.alerts;
+  document.getElementById('no-alerts').style.display = alerts.length ? 'none' : 'block';
+  document.getElementById('alert-tbody').innerHTML = alerts.slice(0, 50).map(a => {
+    const pred = clean(a.prediction);
+    const col = pred === 'BENIGN' ? 'var(--amber-light)' : 'var(--red-light)';
+    const flag = a.is_anomaly ? '<span class="badge badge-red">ANOMALY</span>' : '<span class="badge badge-blue">CLASSIFIED</span>';
+    return `<tr><td style="white-space:nowrap">${esc(new Date(a.timestamp).toLocaleString('en-GB'))}</td>
+      <td style="color:${col};font-weight:600">${esc(pred)}</td><td>${(a.confidence*100).toFixed(2)}%</td>
+      <td>${a.anomaly_score.toFixed(6)}</td><td>${flag}</td></tr>`;
+  }).join('');
+
+  if (!window.Plotly) return;
+  if (!alerts.length) {
+    ['chart-timeline', 'chart-distribution'].forEach(id => { Plotly.purge(id); document.getElementById(id).innerHTML = '<div class="chart-empty">No alerts yet</div>'; });
+    return;
+  }
+  const chrono = alerts.slice().reverse();
+  const classes = [...new Set(chrono.map(a => clean(a.prediction)))];
+  ['chart-timeline', 'chart-distribution'].forEach(id => { const el = document.getElementById(id); if (el.querySelector('.chart-empty')) el.innerHTML = ''; });
+  Plotly.react('chart-timeline', classes.map(c => {
+    const pts = chrono.filter(a => clean(a.prediction) === c);
+    return { type: 'scatter', mode: 'markers', name: c, x: pts.map(a => localTs(a.timestamp)), y: pts.map(a => a.anomaly_score),
+      marker: { size: 8, color: colorFor(c), line: { color: '#18181b', width: 1.5 } },
+      hovertemplate: '%{x}<br>' + c + '<br>Score: %{y:.4f}<extra></extra>' };
+  }), {
+    margin: { l: 56, r: 16, t: 8, b: 40 }, paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
+    xaxis: { ...axis, type: 'date' }, yaxis: { ...axis, title: { text: 'ANOMALY SCORE', font: { size: 10 } }, type: 'log' },
+    showlegend: true, legend: { font: { color: '#a1a1aa', family: 'JetBrains Mono, Consolas, ui-monospace, monospace', size: 10 }, orientation: 'h', y: -0.25 },
+    font: { family: 'Inter, Segoe UI, Arial, sans-serif' }
+  }, plotCfg);
+
+  const counts = {}; alerts.forEach(a => { const c = clean(a.prediction); counts[c] = (counts[c] || 0) + 1; });
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  Plotly.react('chart-distribution', [{
+    type: 'pie', hole: 0.6, sort: false, labels: sorted.map(e => e[0]), values: sorted.map(e => e[1]),
+    marker: { colors: sorted.map(e => colorFor(e[0])), line: { color: '#18181b', width: 2 } },
+    textinfo: 'percent', textfont: { color: '#09090b', size: 11, family: 'JetBrains Mono, Consolas, ui-monospace, monospace' },
+    hovertemplate: '%{label}: %{value} alerts<extra></extra>'
+  }], {
+    margin: { l: 10, r: 10, t: 10, b: 10 }, paper_bgcolor: 'transparent', showlegend: true,
+    legend: { font: { color: '#a1a1aa', family: 'JetBrains Mono, Consolas, ui-monospace, monospace', size: 10 }, orientation: 'h', y: -0.1 },
+    font: { family: 'Inter, Segoe UI, Arial, sans-serif' }
+  }, plotCfg);
 }
 
-// ── Alerts ─────────────────────────────────────
-async function loadAlerts(){
-  try{
-    const r=await fetch(API+'/alerts?limit=50');
-    const d=await r.json();
-    const alerts=d.alerts||[];
-    document.getElementById('alert-count').textContent=d.total+' total alerts';
-    const tbody=document.getElementById('alert-tbody');tbody.innerHTML='';
-    const noEl=document.getElementById('no-alerts');
-    if(!alerts.length){noEl.style.display='block';return;}
-    noEl.style.display='none';
-    alerts.forEach(a=>{
-      const cls=a.prediction==='BENIGN'?'color:var(--green)':'color:var(--red)';
-      const status=a.is_anomaly?'<span class="badge badge-red">ANOMALY</span>':'<span class="badge badge-amber">ALERT</span>';
-      tbody.innerHTML+=`<tr><td style="white-space:nowrap">${new Date(a.timestamp).toLocaleString()}</td><td style="${cls};font-weight:600">${a.prediction}</td><td>${(a.confidence*100).toFixed(1)}%</td><td>${a.anomaly_score.toFixed(6)}</td><td>${status}</td></tr>`;
-    });
-
-    // timeline chart
-    const times=alerts.map(a=>new Date(a.timestamp));
-    const labels=alerts.map(a=>a.prediction);
-    Plotly.newPlot('chart-timeline',[{
-      type:'scatter',mode:'markers',x:times,y:alerts.map(a=>a.anomaly_score),
-      marker:{size:8,color:alerts.map(a=>a.prediction==='BENIGN'?'#22c55e':'#ef4444')},
-      text:labels,hovertemplate:'%{text}<br>Score: %{y:.4f}<br>%{x}<extra></extra>'
-    }],{
-      margin:{l:50,r:20,t:10,b:40},paper_bgcolor:'transparent',plot_bgcolor:'transparent',
-      xaxis:{color:'#64748b',gridcolor:'#1e293b'},yaxis:{title:'Anomaly Score',color:'#64748b',gridcolor:'#1e293b'},
-      font:{family:'-apple-system,sans-serif'}
-    },{responsive:true,displayModeBar:false});
-
-    // distribution chart
-    const counts={};alerts.forEach(a=>{counts[a.prediction]=(counts[a.prediction]||0)+1;});
-    const sorted=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
-    Plotly.newPlot('chart-distribution',[{
-      type:'pie',labels:sorted.map(e=>e[0]),values:sorted.map(e=>e[1]),
-      hole:.45,marker:{colors:sorted.map(([c])=>c==='BENIGN'?'#22c55e':['#ef4444','#f59e0b','#3b82f6','#8b5cf6','#06b6d4','#ec4899','#f97316','#14b8a6','#6366f1','#a855f7','#e11d48','#0ea5e9','#84cc16','#eab308','#d946ef'][Math.floor(Math.random()*15)])},
-      textinfo:'label+percent',textfont:{color:'#e2e8f0',size:11}
-    }],{
-      margin:{l:10,r:10,t:10,b:10},paper_bgcolor:'transparent',
-      showlegend:false,font:{family:'-apple-system,sans-serif'}
-    },{responsive:true,displayModeBar:false});
-
-  }catch{}
-}
-
-// ── Init ──────────────────────────────────────
-pollHealth();loadModelInfo();loadAlerts();
-setInterval(pollHealth,5000);
+// ── Start ──────────────────────────────────────────────────
+pollHealth(); loadModelInfo(); loadAlerts(true);
+setInterval(pollHealth, 5000);
+setInterval(() => loadAlerts(false), 3000);
 </script>
 </body>
 </html>

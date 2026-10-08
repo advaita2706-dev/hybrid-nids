@@ -25,3 +25,7 @@ data/processed/
 # OS
 .DS_Store
 Thumbs.db
+
+# Local-only folders: team zip and defense prep material
+share/
+defense/

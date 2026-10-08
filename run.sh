@@ -23,8 +23,9 @@ if [ ! -f "venv/bin/activate" ]; then
     echo "      Creating one now..."
     python3 -m venv venv
     source venv/bin/activate
-    pip install --quiet fastapi uvicorn streamlit torch torchvision \
-        scikit-learn pandas numpy joblib shap plotly requests pydantic
+    pip install --upgrade pip
+    pip install torch --index-url https://download.pytorch.org/whl/cpu
+    pip install -r requirements.txt
 else
     source venv/bin/activate
 fi

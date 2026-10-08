@@ -1,0 +1,3 @@
+Threshold: 0.0994
+Benign flagged (FP rate): 5.00%
+Attacks flagged: 60.23%
