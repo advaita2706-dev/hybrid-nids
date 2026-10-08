@@ -8,6 +8,18 @@ to the Streamlit dashboard.
 import os
 import time
 import logging
+import warnings
+
+# SHAP calls into scikit-learn in a way that emits a UserWarning on every
+# single prediction. It is harmless, but it floods the console during a live
+# demo, so silence just that one warning. Everything else still surfaces.
+warnings.filterwarnings(
+    "ignore",
+    message=r".*sklearn\.utils\.parallel\.delayed.*",
+    category=UserWarning,
+)
+warnings.filterwarnings("ignore", category=FutureWarning, module="shap")
+
 from datetime import datetime, timezone
 from contextlib import asynccontextmanager
 
