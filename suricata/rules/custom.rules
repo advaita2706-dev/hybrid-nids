@@ -1,0 +1,23 @@
+# ─────────────────────────────────────────────────────────────
+# Hybrid-NIDS Custom Suricata Rules
+# Author: Advait (25BCY1014)
+# Layer 1 — Signature-Based Detection
+# ─────────────────────────────────────────────────────────────
+
+# Rule 1: Detect SSH brute-force (>5 attempts in 60s from same source)
+alert tcp any any -> $HOME_NET 22 (msg:"HYBRID-NIDS SSH Brute Force Detected"; \
+    flow:to_server,established; \
+    threshold:type threshold, track by_src, count 5, seconds 60; \
+    classtype:attempted-admin; sid:1000001; rev:1;)
+
+# Rule 2: Detect DDoS SYN flood (>100 SYN packets in 10s)
+alert tcp any any -> $HOME_NET any (msg:"HYBRID-NIDS Possible SYN Flood"; \
+    flags:S,12; \
+    threshold:type threshold, track by_src, count 100, seconds 10; \
+    classtype:attempted-dos; sid:1000002; rev:1;)
+
+# Rule 3: Detect port scanning (>20 unique ports in 30s)
+alert tcp any any -> $HOME_NET any (msg:"HYBRID-NIDS Port Scan Detected"; \
+    flags:S,12; \
+    threshold:type threshold, track by_src, count 20, seconds 30; \
+    classtype:attempted-recon; sid:1000003; rev:1;)
