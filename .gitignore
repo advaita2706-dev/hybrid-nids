@@ -1,4 +1,4 @@
-﻿# Byte-compiled / optimized / DLL files
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 
@@ -7,7 +7,21 @@ venv/
 ENV/
 env/
 
-# Exclude checkpoint caches but allow models and data
-!.gitignore
-!models/
-!data/
+# Large data files (regenerate via pipeline)
+data/raw/
+data/processed/
+*.csv
+*.parquet
+
+# Trained model binaries (regenerate via train scripts)
+*.pkl
+*.pth
+*.h5
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
